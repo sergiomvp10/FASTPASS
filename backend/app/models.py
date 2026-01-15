@@ -17,16 +17,16 @@ class SubscriptionPlan(str, Enum):
 
 
 class BusinessCategory(str, Enum):
-    GYM = "gym"
     YOGA = "yoga"
-    SPA = "spa"
-    HAIR_SALON = "hair_salon"
-    SKIN_CARE = "skin_care"
     PILATES = "pilates"
-    CROSSFIT = "crossfit"
-    MASSAGE = "massage"
-    NAIL_SALON = "nail_salon"
+    CYCLING = "cycling"
+    STRENGTH = "strength"
+    DANCE = "dance"
+    BOXING = "boxing"
+    RUNNING = "running"
+    MARTIAL_ARTS = "martial_arts"
     BARBERSHOP = "barbershop"
+    SPA = "spa"
 
 
 class BookingStatus(str, Enum):
