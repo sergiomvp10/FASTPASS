@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { 
   Search, MapPin, Star, Clock, Users, CreditCard, Menu, X, 
   Dumbbell, Heart, Sparkles, Scissors, Zap, User, LogOut,
-  Calendar, Check
+  Calendar, Check, ArrowLeft
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -66,6 +66,7 @@ interface Service {
   price_cop: number;
   max_capacity: number;
   business_id: string;
+  is_active: boolean;
 }
 
 interface ScheduleSlot {
@@ -139,11 +140,13 @@ const categoryIcons: Record<string, React.ReactNode> = {
 const LandingPage = ({ 
   onGetStarted, 
   onLogin,
-  onBrowse 
+  onBrowse,
+  onAdmin
 }: { 
   onGetStarted: () => void;
   onLogin: () => void;
   onBrowse: () => void;
+  onAdmin: () => void;
 }) => {
   const observe = useScrollAnimation();
   const images = [
@@ -420,6 +423,7 @@ const LandingPage = ({
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#" className="hover:text-white">Términos de uso</a></li>
                 <li><a href="#" className="hover:text-white">Política de privacidad</a></li>
+                <li><button onClick={onAdmin} className="hover:text-white">Administrador</button></li>
               </ul>
             </div>
           </div>
@@ -799,6 +803,9 @@ const BusinessDetailPage = ({
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<ScheduleSlot | null>(null);
 
   const dates = Array.from({ length: 7 }, (_, i) => {
     const date = new Date();
@@ -844,7 +851,7 @@ const BusinessDetailPage = ({
     }
   };
 
-  const handleBooking = async (slot: ScheduleSlot) => {
+  const handleSlotSelect = (slot: ScheduleSlot) => {
     if (!user) {
       onLogin();
       return;
@@ -853,9 +860,16 @@ const BusinessDetailPage = ({
     if (!selectedService) return;
 
     if (user.credits < selectedService.credits_cost) {
-      toast.error(`Créditos insuficientes. Necesitas ${selectedService.credits_cost} créditos.`);
+      setShowInsufficientCreditsModal(true);
       return;
     }
+
+    setSelectedSlot(slot);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!selectedSlot || !selectedService) return;
 
     setBookingLoading(true);
     try {
@@ -868,7 +882,7 @@ const BusinessDetailPage = ({
         },
         body: JSON.stringify({
           service_id: selectedService.id,
-          schedule_slot_id: slot.id
+          schedule_slot_id: selectedSlot.id
         })
       });
 
@@ -878,6 +892,8 @@ const BusinessDetailPage = ({
       }
 
       toast.success('¡Reserva creada exitosamente!');
+      setShowConfirmModal(false);
+      setSelectedSlot(null);
       onBookingSuccess();
       fetchSchedule();
     } catch (error) {
@@ -1042,7 +1058,7 @@ const BusinessDetailPage = ({
                           key={slot.id}
                           variant="outline"
                           size="sm"
-                          onClick={() => handleBooking(slot)}
+                          onClick={() => handleSlotSelect(slot)}
                           disabled={bookingLoading || slot.available_spots === 0}
                           className="text-sm"
                         >
@@ -1085,6 +1101,110 @@ const BusinessDetailPage = ({
           </div>
         </div>
       </main>
+
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Confirmar Reserva</DialogTitle>
+            <DialogDescription>
+              Revisa los detalles de tu reserva antes de confirmar
+            </DialogDescription>
+          </DialogHeader>
+          {selectedService && selectedSlot && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Servicio:</span>
+                  <span className="font-semibold">{selectedService.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Negocio:</span>
+                  <span className="font-semibold">{business.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Fecha:</span>
+                  <span className="font-semibold">{formatDate(selectedSlot.date)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Hora:</span>
+                  <span className="font-semibold">{selectedSlot.start_time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Duración:</span>
+                  <span className="font-semibold">{selectedService.duration_minutes} min</span>
+                </div>
+                <hr className="my-2" />
+                <div className="flex justify-between text-lg">
+                  <span className="text-gray-600">Créditos a usar:</span>
+                  <span className="font-bold text-blue-600">{selectedService.credits_cost} créditos</span>
+                </div>
+                {selectedService.price_cop > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Valor:</span>
+                    <span className="font-semibold">${selectedService.price_cop.toLocaleString('es-CO')} COP</span>
+                  </div>
+                )}
+                {user && (
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Tu saldo después:</span>
+                    <span>{user.credits - selectedService.credits_cost} créditos</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => setShowConfirmModal(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  onClick={handleConfirmBooking}
+                  disabled={bookingLoading}
+                >
+                  {bookingLoading ? 'Reservando...' : 'Confirmar Reserva'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInsufficientCreditsModal} onOpenChange={setShowInsufficientCreditsModal}>
+        <DialogContent className="sm:max-w-md text-center">
+          <div className="py-6">
+            <div className="w-24 h-24 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+              <CreditCard className="w-12 h-12 text-red-500" />
+            </div>
+            <DialogTitle className="text-xl mb-2">Saldo Insuficiente</DialogTitle>
+            <DialogDescription className="text-base">
+              No tienes suficientes créditos para esta reserva.
+              {selectedService && (
+                <span className="block mt-2">
+                  Necesitas <strong>{selectedService.credits_cost} créditos</strong>, 
+                  pero solo tienes <strong>{user?.credits || 0} créditos</strong>.
+                </span>
+              )}
+            </DialogDescription>
+            <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+              <p className="text-yellow-800 font-medium">
+                ¡Por favor recarga tu saldo para continuar!
+              </p>
+            </div>
+            <Button 
+              className="mt-6 bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setShowInsufficientCreditsModal(false);
+                onBack();
+              }}
+            >
+              Ir a recargar créditos
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -1329,6 +1449,316 @@ const ProfilePage = ({
   );
 };
 
+const AdminPanel = ({ onBack }: { onBack: () => void }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'businesses' | 'services'>('businesses');
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [newPrice, setNewPrice] = useState({ credits: 0, cop: 0 });
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/login?password=${password}`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setIsAuthenticated(true);
+        fetchBusinesses();
+        toast.success('Acceso concedido');
+      } else {
+        toast.error('Contraseña incorrecta');
+      }
+    } catch (error) {
+      toast.error('Error de conexión');
+    }
+  };
+
+  const fetchBusinesses = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/businesses?password=${password}`);
+      if (response.ok) {
+        const data = await response.json();
+        setBusinesses(data);
+      }
+    } catch (error) {
+      console.error('Error fetching businesses:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchServices = async (businessId: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/businesses/${businessId}/services?password=${password}`);
+      if (response.ok) {
+        const data = await response.json();
+        setServices(data);
+      }
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    }
+  };
+
+  const toggleBusinessActive = async (businessId: string, isActive: boolean) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/businesses/${businessId}/toggle?is_active=${isActive}&password=${password}`,
+        { method: 'PATCH' }
+      );
+      if (response.ok) {
+        toast.success(isActive ? 'Negocio habilitado' : 'Negocio deshabilitado');
+        fetchBusinesses();
+      }
+    } catch (error) {
+      toast.error('Error al actualizar negocio');
+    }
+  };
+
+  const toggleServiceActive = async (serviceId: string, isActive: boolean) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/services/${serviceId}/toggle?is_active=${isActive}&password=${password}`,
+        { method: 'PATCH' }
+      );
+      if (response.ok) {
+        toast.success(isActive ? 'Servicio habilitado' : 'Servicio deshabilitado');
+        if (selectedBusiness) fetchServices(selectedBusiness.id);
+      }
+    } catch (error) {
+      toast.error('Error al actualizar servicio');
+    }
+  };
+
+  const updateServicePrice = async () => {
+    if (!editingService) return;
+    try {
+      const response = await fetch(
+        `${API_URL}/api/admin/services/${editingService.id}/price?credits_cost=${newPrice.credits}&price_cop=${newPrice.cop}&password=${password}`,
+        { method: 'PATCH' }
+      );
+      if (response.ok) {
+        toast.success('Precio actualizado');
+        setEditingService(null);
+        if (selectedBusiness) fetchServices(selectedBusiness.id);
+      }
+    } catch (error) {
+      toast.error('Error al actualizar precio');
+    }
+  };
+
+  const handleSelectBusiness = (business: Business) => {
+    setSelectedBusiness(business);
+    fetchServices(business.id);
+    setActiveTab('services');
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">Panel de Administrador</CardTitle>
+            <CardDescription className="text-center">Ingresa la contraseña para acceder</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onBack} className="flex-1">
+                Volver
+              </Button>
+              <Button onClick={handleLogin} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                Ingresar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-bold">Panel de Administrador</h1>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={activeTab === 'businesses' ? 'default' : 'outline'}
+              onClick={() => { setActiveTab('businesses'); setSelectedBusiness(null); }}
+            >
+              Negocios
+            </Button>
+            {selectedBusiness && (
+              <Button
+                variant={activeTab === 'services' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('services')}
+              >
+                Servicios
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {activeTab === 'businesses' && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Gestión de Negocios ({businesses.length})</h2>
+            {loading ? (
+              <div className="text-center py-8">Cargando...</div>
+            ) : (
+              <div className="grid gap-4">
+                {businesses.map((business) => (
+                  <Card key={business.id} className={!business.is_active ? 'opacity-60' : ''}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <img
+                            src={business.image_url}
+                            alt={business.name}
+                            className="w-16 h-16 rounded-lg object-cover"
+                          />
+                          <div>
+                            <h3 className="font-semibold">{business.name}</h3>
+                            <p className="text-sm text-gray-500">{business.city} - {business.category}</p>
+                            <p className="text-xs text-gray-400">{business.address}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleSelectBusiness(business)}
+                          >
+                            Ver Servicios
+                          </Button>
+                          <Button
+                            variant={business.is_active ? 'destructive' : 'default'}
+                            size="sm"
+                            onClick={() => toggleBusinessActive(business.id, !business.is_active)}
+                          >
+                            {business.is_active ? 'Deshabilitar' : 'Habilitar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'services' && selectedBusiness && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setActiveTab('businesses')}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h2 className="text-lg font-semibold">
+                Servicios de {selectedBusiness.name} ({services.length})
+              </h2>
+            </div>
+            <div className="grid gap-4">
+              {services.map((service) => (
+                <Card key={service.id} className={!service.is_active ? 'opacity-60' : ''}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold">{service.name}</h3>
+                        <p className="text-sm text-gray-500">{service.description}</p>
+                        <p className="text-sm">
+                          <span className="font-medium">{service.credits_cost} créditos</span>
+                          {service.price_cop > 0 && (
+                            <span className="text-gray-500"> - ${service.price_cop.toLocaleString('es-CO')} COP</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-gray-400">{service.duration_minutes} minutos</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingService(service);
+                            setNewPrice({ credits: service.credits_cost, cop: service.price_cop });
+                          }}
+                        >
+                          Editar Precio
+                        </Button>
+                        <Button
+                          variant={service.is_active ? 'destructive' : 'default'}
+                          size="sm"
+                          onClick={() => toggleServiceActive(service.id, !service.is_active)}
+                        >
+                          {service.is_active ? 'Deshabilitar' : 'Habilitar'}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      <Dialog open={!!editingService} onOpenChange={() => setEditingService(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Precio</DialogTitle>
+            <DialogDescription>
+              Actualiza el precio del servicio: {editingService?.name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Créditos</label>
+              <Input
+                type="number"
+                value={newPrice.credits}
+                onChange={(e) => setNewPrice({ ...newPrice, credits: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Precio en COP</label>
+              <Input
+                type="number"
+                value={newPrice.cop}
+                onChange={(e) => setNewPrice({ ...newPrice, cop: parseInt(e.target.value) || 0 })}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setEditingService(null)} className="flex-1">
+                Cancelar
+              </Button>
+              <Button onClick={updateServicePrice} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                Guardar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
 const CitySelector = ({ onSelectCity }: { onSelectCity: (city: string) => void }) => {
   const cities = [
     { name: "Duitama", image: "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800" },
@@ -1377,7 +1807,7 @@ const CitySelector = ({ onSelectCity }: { onSelectCity: (city: string) => void }
 };
 
 function App() {
-  const [page, setPage] = useState<'city' | 'landing' | 'search' | 'business' | 'profile'>('city');
+  const [page, setPage] = useState<'city' | 'landing' | 'search' | 'business' | 'profile' | 'admin'>('city');
   const [, setSelectedCity] = useState<string | null>(null);
   const [user, setUser] = useState<UserType | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
@@ -1472,6 +1902,7 @@ function App() {
           onGetStarted={handleGetStarted}
           onLogin={handleLogin}
           onBrowse={() => setPage('search')}
+          onAdmin={() => setPage('admin')}
         />
       )}
 
@@ -1501,6 +1932,10 @@ function App() {
           onLogout={handleLogout}
           onRefreshUser={handleRefreshUser}
         />
+      )}
+
+      {page === 'admin' && (
+        <AdminPanel onBack={() => setPage('landing')} />
       )}
     </>
   );

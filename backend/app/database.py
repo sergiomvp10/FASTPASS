@@ -442,6 +442,59 @@ class Database:
             self.bookings[booking_id]["status"] = BookingStatus.CANCELLED
             return True
         return False
+    
+    # Admin methods
+    def get_all_businesses_admin(self, category: Optional[BusinessCategory] = None, city: Optional[str] = None) -> List[dict]:
+        """Get all businesses including inactive ones (for admin)"""
+        businesses = list(self.businesses.values())
+        if category:
+            businesses = [b for b in businesses if b["category"] == category]
+        if city:
+            businesses = [b for b in businesses if city.lower() in b["city"].lower()]
+        return businesses
+    
+    def update_business(self, business_id: str, update_data: dict) -> Optional[dict]:
+        """Update a business"""
+        if business_id not in self.businesses:
+            return None
+        for key, value in update_data.items():
+            if value is not None:
+                self.businesses[business_id][key] = value
+        return self.businesses[business_id]
+    
+    def toggle_business_active(self, business_id: str, is_active: bool) -> Optional[dict]:
+        """Enable or disable a business"""
+        if business_id not in self.businesses:
+            return None
+        self.businesses[business_id]["is_active"] = is_active
+        return self.businesses[business_id]
+    
+    def get_all_services_by_business_admin(self, business_id: str) -> List[dict]:
+        """Get all services including inactive ones (for admin)"""
+        return [s for s in self.services.values() if s["business_id"] == business_id]
+    
+    def update_service(self, service_id: str, update_data: dict) -> Optional[dict]:
+        """Update a service"""
+        if service_id not in self.services:
+            return None
+        for key, value in update_data.items():
+            if value is not None:
+                self.services[service_id][key] = value
+        return self.services[service_id]
+    
+    def toggle_service_active(self, service_id: str, is_active: bool) -> Optional[dict]:
+        """Enable or disable a service"""
+        if service_id not in self.services:
+            return None
+        self.services[service_id]["is_active"] = is_active
+        return self.services[service_id]
+    
+    def delete_service(self, service_id: str) -> bool:
+        """Delete a service"""
+        if service_id in self.services:
+            del self.services[service_id]
+            return True
+        return False
 
 
 # Global database instance

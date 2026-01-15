@@ -434,3 +434,252 @@ async def obtener_estadisticas():
         "cities": ["Bogotá", "Medellín", "Cali", "Barranquilla", "Cartagena"],
         "categories_count": len(BusinessCategory)
     }
+
+
+# ==================== ENDPOINTS DE ADMINISTRACIÓN ====================
+
+ADMIN_PASSWORD = "admin123"
+
+@app.post("/api/admin/login", tags=["Admin"])
+async def admin_login(password: str = Query(...)):
+    """Login de administrador con contraseña simple"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    return {"message": "Acceso concedido", "admin": True}
+
+
+@app.get("/api/admin/businesses", response_model=List[BusinessResponse], tags=["Admin"])
+async def admin_obtener_negocios(
+    category: Optional[BusinessCategory] = Query(None),
+    city: Optional[str] = Query(None),
+    password: str = Query(...)
+):
+    """Obtener todos los negocios (incluyendo inactivos) - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    businesses = db.get_all_businesses_admin(category, city)
+    return [BusinessResponse(
+        id=b["id"],
+        name=b["name"],
+        description=b["description"],
+        category=b["category"],
+        address=b["address"],
+        city=b["city"],
+        country=b["country"],
+        phone=b["phone"],
+        email=b["email"],
+        image_url=b.get("image_url"),
+        rating=b.get("rating", 0),
+        owner_id=b["owner_id"],
+        is_active=b["is_active"],
+        created_at=b["created_at"]
+    ) for b in businesses]
+
+
+@app.post("/api/admin/businesses", response_model=BusinessResponse, tags=["Admin"])
+async def admin_crear_negocio(business_data: BusinessCreate, password: str = Query(...)):
+    """Crear un nuevo negocio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    business = db.create_business({
+        "name": business_data.name,
+        "description": business_data.description,
+        "category": business_data.category,
+        "address": business_data.address,
+        "city": business_data.city,
+        "country": business_data.country,
+        "phone": business_data.phone,
+        "email": business_data.email,
+        "image_url": business_data.image_url,
+        "rating": business_data.rating,
+        "owner_id": business_data.owner_id or "admin"
+    })
+    
+    return BusinessResponse(
+        id=business["id"],
+        name=business["name"],
+        description=business["description"],
+        category=business["category"],
+        address=business["address"],
+        city=business["city"],
+        country=business["country"],
+        phone=business["phone"],
+        email=business["email"],
+        image_url=business.get("image_url"),
+        rating=business.get("rating", 0),
+        owner_id=business["owner_id"],
+        is_active=business["is_active"],
+        created_at=business["created_at"]
+    )
+
+
+@app.put("/api/admin/businesses/{business_id}", response_model=BusinessResponse, tags=["Admin"])
+async def admin_actualizar_negocio(business_id: str, business_data: BusinessUpdate, password: str = Query(...)):
+    """Actualizar un negocio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    update_data = {}
+    if business_data.name is not None:
+        update_data["name"] = business_data.name
+    if business_data.description is not None:
+        update_data["description"] = business_data.description
+    if business_data.address is not None:
+        update_data["address"] = business_data.address
+    if business_data.phone is not None:
+        update_data["phone"] = business_data.phone
+    if business_data.image_url is not None:
+        update_data["image_url"] = business_data.image_url
+    
+    business = db.update_business(business_id, update_data)
+    if not business:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+    
+    return BusinessResponse(
+        id=business["id"],
+        name=business["name"],
+        description=business["description"],
+        category=business["category"],
+        address=business["address"],
+        city=business["city"],
+        country=business["country"],
+        phone=business["phone"],
+        email=business["email"],
+        image_url=business.get("image_url"),
+        rating=business.get("rating", 0),
+        owner_id=business["owner_id"],
+        is_active=business["is_active"],
+        created_at=business["created_at"]
+    )
+
+
+@app.patch("/api/admin/businesses/{business_id}/toggle", tags=["Admin"])
+async def admin_toggle_negocio(business_id: str, is_active: bool = Query(...), password: str = Query(...)):
+    """Habilitar o deshabilitar un negocio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    business = db.toggle_business_active(business_id, is_active)
+    if not business:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+    
+    return {"message": f"Negocio {'habilitado' if is_active else 'deshabilitado'} exitosamente", "is_active": is_active}
+
+
+@app.get("/api/admin/businesses/{business_id}/services", response_model=List[ServiceResponse], tags=["Admin"])
+async def admin_obtener_servicios(business_id: str, password: str = Query(...)):
+    """Obtener todos los servicios de un negocio (incluyendo inactivos) - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    services = db.get_all_services_by_business_admin(business_id)
+    return [ServiceResponse(
+        id=s["id"],
+        name=s["name"],
+        description=s["description"],
+        duration_minutes=s["duration_minutes"],
+        credits_cost=s["credits_cost"],
+        price_cop=s.get("price_cop", 0),
+        max_capacity=s["max_capacity"],
+        business_id=s["business_id"],
+        is_active=s["is_active"],
+        created_at=s["created_at"]
+    ) for s in services]
+
+
+@app.post("/api/admin/businesses/{business_id}/services", response_model=ServiceResponse, tags=["Admin"])
+async def admin_crear_servicio(business_id: str, service_data: ServiceCreate, password: str = Query(...)):
+    """Crear un nuevo servicio para un negocio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    business = db.get_business_by_id(business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Negocio no encontrado")
+    
+    service = db.create_service({
+        "name": service_data.name,
+        "description": service_data.description,
+        "duration_minutes": service_data.duration_minutes,
+        "credits_cost": service_data.credits_cost,
+        "price_cop": service_data.price_cop,
+        "max_capacity": service_data.max_capacity,
+        "business_id": business_id
+    })
+    
+    return ServiceResponse(
+        id=service["id"],
+        name=service["name"],
+        description=service["description"],
+        duration_minutes=service["duration_minutes"],
+        credits_cost=service["credits_cost"],
+        price_cop=service.get("price_cop", 0),
+        max_capacity=service["max_capacity"],
+        business_id=service["business_id"],
+        is_active=service["is_active"],
+        created_at=service["created_at"]
+    )
+
+
+@app.put("/api/admin/services/{service_id}", response_model=ServiceResponse, tags=["Admin"])
+async def admin_actualizar_servicio(service_id: str, service_data: ServiceUpdate, password: str = Query(...)):
+    """Actualizar un servicio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    update_data = {}
+    if service_data.name is not None:
+        update_data["name"] = service_data.name
+    if service_data.description is not None:
+        update_data["description"] = service_data.description
+    if service_data.duration_minutes is not None:
+        update_data["duration_minutes"] = service_data.duration_minutes
+    if service_data.credits_cost is not None:
+        update_data["credits_cost"] = service_data.credits_cost
+    if service_data.max_capacity is not None:
+        update_data["max_capacity"] = service_data.max_capacity
+    
+    service = db.update_service(service_id, update_data)
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    
+    return ServiceResponse(
+        id=service["id"],
+        name=service["name"],
+        description=service["description"],
+        duration_minutes=service["duration_minutes"],
+        credits_cost=service["credits_cost"],
+        price_cop=service.get("price_cop", 0),
+        max_capacity=service["max_capacity"],
+        business_id=service["business_id"],
+        is_active=service["is_active"],
+        created_at=service["created_at"]
+    )
+
+
+@app.patch("/api/admin/services/{service_id}/toggle", tags=["Admin"])
+async def admin_toggle_servicio(service_id: str, is_active: bool = Query(...), password: str = Query(...)):
+    """Habilitar o deshabilitar un servicio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    service = db.toggle_service_active(service_id, is_active)
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    
+    return {"message": f"Servicio {'habilitado' if is_active else 'deshabilitado'} exitosamente", "is_active": is_active}
+
+
+@app.patch("/api/admin/services/{service_id}/price", tags=["Admin"])
+async def admin_actualizar_precio(service_id: str, credits_cost: int = Query(...), price_cop: int = Query(...), password: str = Query(...)):
+    """Actualizar el precio de un servicio - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    service = db.update_service(service_id, {"credits_cost": credits_cost, "price_cop": price_cop})
+    if not service:
+        raise HTTPException(status_code=404, detail="Servicio no encontrado")
+    
+    return {"message": "Precio actualizado exitosamente", "credits_cost": credits_cost, "price_cop": price_cop}
