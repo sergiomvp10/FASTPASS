@@ -204,61 +204,62 @@ class Database:
             self.businesses[business["id"]] = business
         
         # Create sample services for each business
+        # Precios en COP con ~30% de descuento sobre precio normal
         service_templates = {
             BusinessCategory.YOGA: [
-                {"name": "Hatha Yoga", "description": "Clase de yoga tradicional para todos los niveles", "duration_minutes": 60, "credits_cost": 6, "max_capacity": 15},
-                {"name": "Vinyasa Flow", "description": "Yoga dinámico con secuencias fluidas", "duration_minutes": 75, "credits_cost": 7, "max_capacity": 12},
-                {"name": "Meditación Guiada", "description": "Sesión de meditación y mindfulness", "duration_minutes": 30, "credits_cost": 4, "max_capacity": 20},
+                {"name": "Hatha Yoga", "description": "Clase de yoga tradicional para todos los niveles", "duration_minutes": 60, "credits_cost": 6, "price_cop": 7500, "max_capacity": 15},
+                {"name": "Vinyasa Flow", "description": "Yoga dinámico con secuencias fluidas", "duration_minutes": 75, "credits_cost": 7, "price_cop": 9000, "max_capacity": 12},
+                {"name": "Meditación Guiada", "description": "Sesión de meditación y mindfulness", "duration_minutes": 30, "credits_cost": 4, "price_cop": 5000, "max_capacity": 20},
             ],
             BusinessCategory.PILATES: [
-                {"name": "Mat Pilates", "description": "Clase de Pilates en colchoneta", "duration_minutes": 50, "credits_cost": 6, "max_capacity": 12},
-                {"name": "Reformer", "description": "Clase en máquina reformer", "duration_minutes": 50, "credits_cost": 10, "max_capacity": 6},
-                {"name": "Pilates Privado", "description": "Sesión individual personalizada", "duration_minutes": 50, "credits_cost": 15, "max_capacity": 1},
+                {"name": "Mat Pilates", "description": "Clase de Pilates en colchoneta", "duration_minutes": 50, "credits_cost": 6, "price_cop": 8000, "max_capacity": 12},
+                {"name": "Reformer", "description": "Clase en máquina reformer", "duration_minutes": 50, "credits_cost": 10, "price_cop": 15000, "max_capacity": 6},
+                {"name": "Pilates Privado", "description": "Sesión individual personalizada", "duration_minutes": 50, "credits_cost": 15, "price_cop": 25000, "max_capacity": 1},
             ],
             BusinessCategory.CYCLING: [
-                {"name": "Spinning Básico", "description": "Clase de ciclismo indoor para principiantes", "duration_minutes": 45, "credits_cost": 5, "max_capacity": 25},
-                {"name": "Spinning Intenso", "description": "Clase de alta intensidad con intervalos", "duration_minutes": 50, "credits_cost": 7, "max_capacity": 20},
-                {"name": "Cycling con Ritmo", "description": "Spinning al ritmo de la música", "duration_minutes": 45, "credits_cost": 6, "max_capacity": 25},
+                {"name": "Spinning Básico", "description": "Clase de ciclismo indoor para principiantes", "duration_minutes": 45, "credits_cost": 5, "price_cop": 6000, "max_capacity": 25},
+                {"name": "Spinning Intenso", "description": "Clase de alta intensidad con intervalos", "duration_minutes": 50, "credits_cost": 7, "price_cop": 8000, "max_capacity": 20},
+                {"name": "Cycling con Ritmo", "description": "Spinning al ritmo de la música", "duration_minutes": 45, "credits_cost": 6, "price_cop": 7000, "max_capacity": 25},
             ],
             BusinessCategory.STRENGTH: [
-                {"name": "Entrenamiento de Fuerza", "description": "Clase grupal de levantamiento de pesas", "duration_minutes": 60, "credits_cost": 7, "max_capacity": 15},
-                {"name": "Sesión Personal", "description": "Entrenamiento personalizado con coach", "duration_minutes": 60, "credits_cost": 12, "max_capacity": 1},
-                {"name": "Circuito de Fuerza", "description": "Entrenamiento en circuito con pesas", "duration_minutes": 45, "credits_cost": 6, "max_capacity": 12},
+                {"name": "Entrenamiento de Fuerza", "description": "Clase grupal de levantamiento de pesas", "duration_minutes": 60, "credits_cost": 5, "price_cop": 5000, "max_capacity": 15},
+                {"name": "Sesión Personal", "description": "Entrenamiento personalizado con coach", "duration_minutes": 60, "credits_cost": 12, "price_cop": 18000, "max_capacity": 1},
+                {"name": "Circuito de Fuerza", "description": "Entrenamiento en circuito con pesas", "duration_minutes": 45, "credits_cost": 4, "price_cop": 4500, "max_capacity": 12},
             ],
             BusinessCategory.DANCE: [
-                {"name": "Salsa", "description": "Clase de salsa para todos los niveles", "duration_minutes": 60, "credits_cost": 6, "max_capacity": 20},
-                {"name": "Bachata", "description": "Aprende a bailar bachata", "duration_minutes": 60, "credits_cost": 6, "max_capacity": 20},
-                {"name": "Urbano", "description": "Clase de baile urbano y hip-hop", "duration_minutes": 60, "credits_cost": 7, "max_capacity": 18},
+                {"name": "Salsa", "description": "Clase de salsa para todos los niveles", "duration_minutes": 60, "credits_cost": 6, "price_cop": 7000, "max_capacity": 20},
+                {"name": "Bachata", "description": "Aprende a bailar bachata", "duration_minutes": 60, "credits_cost": 6, "price_cop": 7000, "max_capacity": 20},
+                {"name": "Urbano", "description": "Clase de baile urbano y hip-hop", "duration_minutes": 60, "credits_cost": 7, "price_cop": 8000, "max_capacity": 18},
             ],
             BusinessCategory.BOXING: [
-                {"name": "Boxeo Básico", "description": "Introducción al boxeo y técnicas básicas", "duration_minutes": 60, "credits_cost": 7, "max_capacity": 15},
-                {"name": "Boxeo Cardio", "description": "Entrenamiento cardiovascular con boxeo", "duration_minutes": 45, "credits_cost": 6, "max_capacity": 20},
-                {"name": "Sparring", "description": "Práctica de combate supervisada", "duration_minutes": 60, "credits_cost": 10, "max_capacity": 10},
+                {"name": "Boxeo Básico", "description": "Introducción al boxeo y técnicas básicas", "duration_minutes": 60, "credits_cost": 7, "price_cop": 8000, "max_capacity": 15},
+                {"name": "Boxeo Cardio", "description": "Entrenamiento cardiovascular con boxeo", "duration_minutes": 45, "credits_cost": 6, "price_cop": 7000, "max_capacity": 20},
+                {"name": "Sparring", "description": "Práctica de combate supervisada", "duration_minutes": 60, "credits_cost": 10, "price_cop": 12000, "max_capacity": 10},
             ],
             BusinessCategory.RUNNING: [
-                {"name": "Entrenamiento Grupal", "description": "Sesión de running en grupo", "duration_minutes": 60, "credits_cost": 5, "max_capacity": 30},
-                {"name": "Intervalos", "description": "Entrenamiento de intervalos de alta intensidad", "duration_minutes": 45, "credits_cost": 6, "max_capacity": 25},
-                {"name": "Técnica de Carrera", "description": "Mejora tu técnica de running", "duration_minutes": 60, "credits_cost": 8, "max_capacity": 15},
+                {"name": "Entrenamiento Grupal", "description": "Sesión de running en grupo", "duration_minutes": 60, "credits_cost": 4, "price_cop": 4000, "max_capacity": 30},
+                {"name": "Intervalos", "description": "Entrenamiento de intervalos de alta intensidad", "duration_minutes": 45, "credits_cost": 5, "price_cop": 5000, "max_capacity": 25},
+                {"name": "Técnica de Carrera", "description": "Mejora tu técnica de running", "duration_minutes": 60, "credits_cost": 7, "price_cop": 8000, "max_capacity": 15},
             ],
             BusinessCategory.MARTIAL_ARTS: [
-                {"name": "Karate", "description": "Clase de karate tradicional", "duration_minutes": 60, "credits_cost": 7, "max_capacity": 15},
-                {"name": "Taekwondo", "description": "Arte marcial coreano", "duration_minutes": 60, "credits_cost": 7, "max_capacity": 15},
-                {"name": "Jiu-Jitsu", "description": "Arte marcial brasileño de grappling", "duration_minutes": 75, "credits_cost": 9, "max_capacity": 12},
+                {"name": "Karate", "description": "Clase de karate tradicional", "duration_minutes": 60, "credits_cost": 7, "price_cop": 8000, "max_capacity": 15},
+                {"name": "Taekwondo", "description": "Arte marcial coreano", "duration_minutes": 60, "credits_cost": 7, "price_cop": 8000, "max_capacity": 15},
+                {"name": "Jiu-Jitsu", "description": "Arte marcial brasileño de grappling", "duration_minutes": 75, "credits_cost": 9, "price_cop": 12000, "max_capacity": 12},
             ],
             BusinessCategory.BARBERSHOP: [
-                {"name": "Corte Clásico", "description": "Corte de cabello tradicional para hombres", "duration_minutes": 30, "credits_cost": 6, "max_capacity": 1},
-                {"name": "Corte + Barba", "description": "Corte de cabello y arreglo de barba", "duration_minutes": 45, "credits_cost": 9, "max_capacity": 1},
-                {"name": "Afeitado Clásico", "description": "Afeitado con navaja y toalla caliente", "duration_minutes": 30, "credits_cost": 7, "max_capacity": 1},
+                {"name": "Corte Clásico", "description": "Corte de cabello tradicional para hombres", "duration_minutes": 30, "credits_cost": 5, "price_cop": 12000, "max_capacity": 1},
+                {"name": "Corte + Barba", "description": "Corte de cabello y arreglo de barba", "duration_minutes": 45, "credits_cost": 8, "price_cop": 18000, "max_capacity": 1},
+                {"name": "Afeitado Clásico", "description": "Afeitado con navaja y toalla caliente", "duration_minutes": 30, "credits_cost": 6, "price_cop": 15000, "max_capacity": 1},
             ],
             BusinessCategory.SPA: [
-                {"name": "Masaje Relajante", "description": "Masaje corporal completo para relajación", "duration_minutes": 60, "credits_cost": 15, "max_capacity": 1},
-                {"name": "Facial Hidratante", "description": "Tratamiento facial de hidratación profunda", "duration_minutes": 45, "credits_cost": 12, "max_capacity": 1},
-                {"name": "Circuito Spa", "description": "Acceso a sauna, vapor y jacuzzi", "duration_minutes": 120, "credits_cost": 10, "max_capacity": 10},
+                {"name": "Masaje Relajante", "description": "Masaje corporal completo para relajación", "duration_minutes": 60, "credits_cost": 12, "price_cop": 25000, "max_capacity": 1},
+                {"name": "Facial Hidratante", "description": "Tratamiento facial de hidratación profunda", "duration_minutes": 45, "credits_cost": 10, "price_cop": 20000, "max_capacity": 1},
+                {"name": "Circuito Spa", "description": "Acceso a sauna, vapor y jacuzzi", "duration_minutes": 120, "credits_cost": 8, "price_cop": 18000, "max_capacity": 10},
             ],
             BusinessCategory.PARTY: [
-                {"name": "Entrada General", "description": "Acceso a la discoteca con entrada prioritaria", "duration_minutes": 240, "credits_cost": 8, "max_capacity": 50},
-                {"name": "Mesa VIP", "description": "Mesa reservada en zona VIP con botella incluida", "duration_minutes": 240, "credits_cost": 20, "max_capacity": 8},
-                {"name": "Experiencia Premium", "description": "Acceso VIP con mesa, botella premium y servicio exclusivo", "duration_minutes": 240, "credits_cost": 35, "max_capacity": 6},
+                {"name": "Entrada General", "description": "Acceso a la discoteca con entrada prioritaria", "duration_minutes": 240, "credits_cost": 6, "price_cop": 15000, "max_capacity": 50},
+                {"name": "Mesa VIP", "description": "Mesa reservada en zona VIP con botella incluida", "duration_minutes": 240, "credits_cost": 15, "price_cop": 80000, "max_capacity": 8},
+                {"name": "Experiencia Premium", "description": "Acceso VIP con mesa, botella premium y servicio exclusivo", "duration_minutes": 240, "credits_cost": 25, "price_cop": 150000, "max_capacity": 6},
             ],
         }
         

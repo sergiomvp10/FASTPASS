@@ -105,6 +105,7 @@ class ServiceBase(BaseModel):
     description: str
     duration_minutes: int = Field(ge=15, le=480)
     credits_cost: int = Field(ge=1, le=100)
+    price_cop: int = Field(default=0, ge=0)
     max_capacity: int = Field(default=1, ge=1)
 
 
@@ -117,6 +118,7 @@ class ServiceResponse(ServiceBase):
     business_id: str
     is_active: bool
     created_at: datetime
+    price_cop: int = 0
 
 
 class ServiceUpdate(BaseModel):

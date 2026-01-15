@@ -63,6 +63,7 @@ interface Service {
   description: string;
   duration_minutes: number;
   credits_cost: number;
+  price_cop: number;
   max_capacity: number;
   business_id: string;
 }
@@ -984,9 +985,16 @@ const BusinessDetailPage = ({
                               </span>
                             </div>
                           </div>
-                          <Badge className="bg-blue-600">
-                            {service.credits_cost} créditos
-                          </Badge>
+                          <div className="text-right">
+                            <Badge className="bg-blue-600">
+                              {service.credits_cost} créditos
+                            </Badge>
+                            {service.price_cop > 0 && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                ${service.price_cop.toLocaleString('es-CO')} COP
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1003,6 +1011,7 @@ const BusinessDetailPage = ({
                 {selectedService && (
                   <CardDescription>
                     {selectedService.name} - {selectedService.credits_cost} créditos
+                    {selectedService.price_cop > 0 && ` ($${selectedService.price_cop.toLocaleString('es-CO')} COP)`}
                   </CardDescription>
                 )}
               </CardHeader>
