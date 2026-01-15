@@ -107,6 +107,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   martial_arts: <Zap className="w-5 h-5" />,
   barbershop: <Scissors className="w-5 h-5" />,
   spa: <Sparkles className="w-5 h-5" />,
+  party: <Sparkles className="w-5 h-5" />,
 };
 
 const LandingPage = ({ 
@@ -278,6 +279,7 @@ const LandingPage = ({
               { name: "Artes marciales", image: "https://images.unsplash.com/photo-1555597673-b21d5c935865?w=400" },
               { name: "Barbería", image: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400" },
               { name: "Spa", image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400" },
+              { name: "Fiesta", image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400" },
             ].map((cat, i) => (
               <div 
                 key={i}

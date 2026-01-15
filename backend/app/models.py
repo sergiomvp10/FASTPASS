@@ -27,6 +27,7 @@ class BusinessCategory(str, Enum):
     MARTIAL_ARTS = "martial_arts"
     BARBERSHOP = "barbershop"
     SPA = "spa"
+    PARTY = "party"
 
 
 class BookingStatus(str, Enum):

@@ -254,6 +254,10 @@ async def obtener_categorias():
         BusinessCategory.SPA: {
             "label": "Spa",
             "image": "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400"
+        },
+        BusinessCategory.PARTY: {
+            "label": "Fiesta",
+            "image": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400"
         }
     }
     return [{"value": cat.value, "label": data["label"], "image": data["image"]} for cat, data in category_data.items()]

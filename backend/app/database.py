@@ -181,6 +181,22 @@ class Database:
                 "owner_id": "system",
                 "is_active": True,
                 "created_at": datetime.utcnow()
+            },
+            {
+                "id": str(uuid.uuid4()),
+                "name": "Club Élite Bogotá",
+                "description": "Discoteca de alto nivel con música electrónica, house y reggaetón. Ambiente exclusivo y VIP.",
+                "category": BusinessCategory.PARTY,
+                "address": "Zona T, Calle 83 #12-15",
+                "city": "Bogotá",
+                "country": "Colombia",
+                "phone": "+57 601 555 1234",
+                "email": "reservas@clubelite.co",
+                "image_url": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800",
+                "rating": 4.7,
+                "owner_id": "system",
+                "is_active": True,
+                "created_at": datetime.utcnow()
             }
         ]
         
@@ -238,6 +254,11 @@ class Database:
                 {"name": "Masaje Relajante", "description": "Masaje corporal completo para relajación", "duration_minutes": 60, "credits_cost": 15, "max_capacity": 1},
                 {"name": "Facial Hidratante", "description": "Tratamiento facial de hidratación profunda", "duration_minutes": 45, "credits_cost": 12, "max_capacity": 1},
                 {"name": "Circuito Spa", "description": "Acceso a sauna, vapor y jacuzzi", "duration_minutes": 120, "credits_cost": 10, "max_capacity": 10},
+            ],
+            BusinessCategory.PARTY: [
+                {"name": "Entrada General", "description": "Acceso a la discoteca con entrada prioritaria", "duration_minutes": 240, "credits_cost": 8, "max_capacity": 50},
+                {"name": "Mesa VIP", "description": "Mesa reservada en zona VIP con botella incluida", "duration_minutes": 240, "credits_cost": 20, "max_capacity": 8},
+                {"name": "Experiencia Premium", "description": "Acceso VIP con mesa, botella premium y servicio exclusivo", "duration_minutes": 240, "credits_cost": 35, "max_capacity": 6},
             ],
         }
         
