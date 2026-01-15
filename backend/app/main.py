@@ -1,7 +1,11 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 from datetime import timedelta
+import os
+import uuid
+import base64
 
 from app.models import (
     UserCreate, UserLogin, UserResponse, UserUpdate, Token,
@@ -683,3 +687,29 @@ async def admin_actualizar_precio(service_id: str, credits_cost: int = Query(...
         raise HTTPException(status_code=404, detail="Servicio no encontrado")
     
     return {"message": "Precio actualizado exitosamente", "credits_cost": credits_cost, "price_cop": price_cop}
+
+
+@app.post("/api/admin/upload-image", tags=["Admin"])
+async def admin_upload_image(image_data: str = Query(...), password: str = Query(...)):
+    """Subir una imagen en base64 y devolver la URL - Solo admin"""
+    if password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+    
+    try:
+        # Decode base64 image
+        if "," in image_data:
+            # Remove data URL prefix if present
+            image_data = image_data.split(",")[1]
+        
+        image_bytes = base64.b64decode(image_data)
+        
+        # Generate unique filename
+        filename = f"{uuid.uuid4()}.jpg"
+        
+        # For now, we'll store the image as a data URL since we don't have persistent storage
+        # In production, you would upload to S3, Cloudinary, etc.
+        data_url = f"data:image/jpeg;base64,{image_data}"
+        
+        return {"url": data_url, "filename": filename}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al procesar la imagen: {str(e)}")

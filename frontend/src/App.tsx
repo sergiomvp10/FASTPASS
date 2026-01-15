@@ -1456,9 +1456,24 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'businesses' | 'services'>('businesses');
+  const [activeTab, setActiveTab] = useState<'businesses' | 'services' | 'new-business'>('businesses');
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [newPrice, setNewPrice] = useState({ credits: 0, cop: 0 });
+  const [showNewBusinessForm, setShowNewBusinessForm] = useState(false);
+  const [newBusiness, setNewBusiness] = useState({
+    name: '',
+    description: '',
+    category: 'yoga',
+    address: '',
+    city: 'Duitama',
+    country: 'Colombia',
+    phone: '',
+    email: '',
+    image_url: '',
+    rating: 4.5
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
 
   const handleLogin = async () => {
     try {
@@ -1557,6 +1572,121 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
     setActiveTab('services');
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setNewBusiness({ ...newBusiness, image_url: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCreateBusiness = async () => {
+    if (!newBusiness.name || !newBusiness.address || !newBusiness.email) {
+      toast.error('Por favor completa los campos obligatorios');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/businesses?password=${password}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBusiness)
+      });
+
+      if (response.ok) {
+        toast.success('Negocio creado exitosamente');
+        setShowNewBusinessForm(false);
+        setNewBusiness({
+          name: '',
+          description: '',
+          category: 'yoga',
+          address: '',
+          city: 'Duitama',
+          country: 'Colombia',
+          phone: '',
+          email: '',
+          image_url: '',
+          rating: 4.5
+        });
+        setImagePreview(null);
+        fetchBusinesses();
+        setActiveTab('businesses');
+      } else {
+        const error = await response.json();
+        toast.error(error.detail || 'Error al crear negocio');
+      }
+    } catch (error) {
+      toast.error('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateBusiness = async () => {
+    if (!editingBusiness) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/admin/businesses/${editingBusiness.id}?password=${password}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingBusiness.name,
+          description: editingBusiness.description,
+          address: editingBusiness.address,
+          phone: editingBusiness.phone,
+          image_url: editingBusiness.image_url
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Negocio actualizado exitosamente');
+        setEditingBusiness(null);
+        fetchBusinesses();
+      } else {
+        toast.error('Error al actualizar negocio');
+      }
+    } catch (error) {
+      toast.error('Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditBusinessImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && editingBusiness) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setEditingBusiness({ ...editingBusiness, image_url: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const categories = [
+    { value: 'yoga', label: 'Yoga' },
+    { value: 'pilates', label: 'Pilates' },
+    { value: 'cycling', label: 'Ciclismo' },
+    { value: 'strength', label: 'Entrenamiento de fuerza' },
+    { value: 'dance', label: 'Danza' },
+    { value: 'boxing', label: 'Boxeo' },
+    { value: 'running', label: 'Carrera' },
+    { value: 'martial_arts', label: 'Artes marciales' },
+    { value: 'barbershop', label: 'Barbería' },
+    { value: 'spa', label: 'Spa' },
+    { value: 'party', label: 'Fiesta' }
+  ];
+
+  const cities = ['Duitama', 'Tunja', 'Sogamoso'];
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -1617,9 +1747,17 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        {activeTab === 'businesses' && (
+        {activeTab === 'businesses' && !showNewBusinessForm && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Gestión de Negocios ({businesses.length})</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Gestión de Negocios ({businesses.length})</h2>
+              <Button 
+                onClick={() => setShowNewBusinessForm(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                + Agregar Negocio
+              </Button>
+            </div>
             {loading ? (
               <div className="text-center py-8">Cargando...</div>
             ) : (
@@ -1644,6 +1782,13 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => setEditingBusiness(business)}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => handleSelectBusiness(business)}
                           >
                             Ver Servicios
@@ -1662,6 +1807,160 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'businesses' && showNewBusinessForm && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="icon" onClick={() => setShowNewBusinessForm(false)}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h2 className="text-lg font-semibold">Agregar Nuevo Negocio</h2>
+            </div>
+            
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Nombre del Negocio *</Label>
+                    <Input
+                      value={newBusiness.name}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, name: e.target.value })}
+                      placeholder="Ej: Yoga Studio Duitama"
+                    />
+                  </div>
+                  <div>
+                    <Label>Email *</Label>
+                    <Input
+                      type="email"
+                      value={newBusiness.email}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, email: e.target.value })}
+                      placeholder="contacto@negocio.com"
+                    />
+                  </div>
+                  <div>
+                    <Label>Categoría</Label>
+                    <Select
+                      value={newBusiness.category}
+                      onValueChange={(value) => setNewBusiness({ ...newBusiness, category: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Ciudad</Label>
+                    <Select
+                      value={newBusiness.city}
+                      onValueChange={(value) => setNewBusiness({ ...newBusiness, city: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((city) => (
+                          <SelectItem key={city} value={city}>{city}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Dirección *</Label>
+                    <Input
+                      value={newBusiness.address}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, address: e.target.value })}
+                      placeholder="Calle 15 #10-20"
+                    />
+                  </div>
+                  <div>
+                    <Label>Teléfono</Label>
+                    <Input
+                      value={newBusiness.phone}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, phone: e.target.value })}
+                      placeholder="+57 300 123 4567"
+                    />
+                  </div>
+                  <div>
+                    <Label>Calificación (1-5)</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="5"
+                      step="0.1"
+                      value={newBusiness.rating}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, rating: parseFloat(e.target.value) || 4.5 })}
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Descripción</Label>
+                    <Input
+                      value={newBusiness.description}
+                      onChange={(e) => setNewBusiness({ ...newBusiness, description: e.target.value })}
+                      placeholder="Descripción del negocio..."
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label>Imagen del Negocio</Label>
+                    <div className="flex items-center gap-4 mt-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        id="business-image"
+                      />
+                      <label
+                        htmlFor="business-image"
+                        className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg border border-dashed border-gray-300"
+                      >
+                        Seleccionar imagen
+                      </label>
+                      {imagePreview && (
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          className="w-20 h-20 rounded-lg object-cover"
+                        />
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">O ingresa una URL de imagen:</p>
+                    <Input
+                      value={newBusiness.image_url.startsWith('data:') ? '' : newBusiness.image_url}
+                      onChange={(e) => {
+                        setNewBusiness({ ...newBusiness, image_url: e.target.value });
+                        setImagePreview(null);
+                      }}
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowNewBusinessForm(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={handleCreateBusiness}
+                    disabled={loading}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  >
+                    {loading ? 'Creando...' : 'Crear Negocio'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -1753,6 +2052,94 @@ const AdminPanel = ({ onBack }: { onBack: () => void }) => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingBusiness} onOpenChange={() => setEditingBusiness(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Negocio</DialogTitle>
+            <DialogDescription>
+              Actualiza la información del negocio
+            </DialogDescription>
+          </DialogHeader>
+          {editingBusiness && (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Nombre</Label>
+                  <Input
+                    value={editingBusiness.name}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Teléfono</Label>
+                  <Input
+                    value={editingBusiness.phone || ''}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, phone: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Dirección</Label>
+                  <Input
+                    value={editingBusiness.address}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, address: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Descripción</Label>
+                  <Input
+                    value={editingBusiness.description}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, description: e.target.value })}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label>Imagen</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditBusinessImage}
+                      className="hidden"
+                      id="edit-business-image"
+                    />
+                    <label
+                      htmlFor="edit-business-image"
+                      className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg border border-dashed border-gray-300"
+                    >
+                      Cambiar imagen
+                    </label>
+                    {editingBusiness.image_url && (
+                      <img
+                        src={editingBusiness.image_url}
+                        alt="Preview"
+                        className="w-20 h-20 rounded-lg object-cover"
+                      />
+                    )}
+                  </div>
+                  <Input
+                    value={editingBusiness.image_url?.startsWith('data:') ? '' : (editingBusiness.image_url || '')}
+                    onChange={(e) => setEditingBusiness({ ...editingBusiness, image_url: e.target.value })}
+                    placeholder="O ingresa URL de imagen"
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button variant="outline" onClick={() => setEditingBusiness(null)} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleUpdateBusiness} 
+                  disabled={loading}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                >
+                  {loading ? 'Guardando...' : 'Guardar Cambios'}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
