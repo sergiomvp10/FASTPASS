@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,31 @@ import {
 } from 'lucide-react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+const useScrollAnimation = () => {
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  
+  const observe = useCallback((element: HTMLElement | null) => {
+    if (!element) return;
+    
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+      );
+    }
+    
+    observerRef.current.observe(element);
+  }, []);
+  
+  return observe;
+};
 
 interface Business {
   id: string;
@@ -92,7 +117,7 @@ const Logo = ({ className = "" }: { className?: string }) => (
         <div className="h-1/4 bg-red-600"></div>
       </div>
     </div>
-    <span className="text-xl font-bold text-gray-900">FastPass Col</span>
+    <span className="text-xl font-bold text-gray-900">NextBooking Col</span>
   </div>
 );
 
@@ -119,6 +144,7 @@ const LandingPage = ({
   onLogin: () => void;
   onBrowse: () => void;
 }) => {
+  const observe = useScrollAnimation();
   const images = [
     'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400',
     'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=400',
@@ -182,7 +208,7 @@ const LandingPage = ({
                 </div>
               </div>
               <CardTitle className="text-3xl md:text-4xl font-bold">
-                ¡Hola, somos FastPass Col!
+                ¡Hola, somos NextBooking Col!
               </CardTitle>
               <CardDescription className="text-lg mt-4 text-gray-600">
                 Bienvenido a la membresía única para todo lo relacionado con fitness, bienestar y belleza en Colombia.
@@ -214,11 +240,11 @@ const LandingPage = ({
         </div>
       </section>
 
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">¿Por qué FastPass Col?</h2>
+          <h2 ref={observe} className="animate-fade-up text-3xl font-bold text-center mb-12">¿Por qué NextBooking Col?</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-1 text-center">
               <div className="w-64 h-48 mx-auto mb-6 rounded-2xl overflow-hidden">
                 <img 
                   src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400" 
@@ -231,7 +257,7 @@ const LandingPage = ({
                 Reserva en cualquier estudio, gimnasio, salón o spa que quieras, las veces que quieras.
               </p>
             </div>
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-2 text-center">
               <div className="w-64 h-48 mx-auto mb-6 rounded-2xl overflow-hidden">
                 <img 
                   src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400" 
@@ -244,7 +270,7 @@ const LandingPage = ({
                 Haz ejercicio, recibe un masaje o incluso un manicure con la misma membresía.
               </p>
             </div>
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-3 text-center">
               <div className="w-64 h-48 mx-auto mb-6 rounded-2xl overflow-hidden">
                 <img 
                   src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400" 
@@ -261,10 +287,10 @@ const LandingPage = ({
         </div>
       </section>
 
-      <section className="py-20 bg-blue-50">
+      <section className="py-20 bg-blue-50 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Explora nuestras categorías</h2>
-          <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+          <h2 ref={observe} className="animate-fade-up text-3xl font-bold text-center mb-4">Explora nuestras categorías</h2>
+          <p ref={observe} className="animate-fade-up text-gray-600 text-center mb-12 max-w-2xl mx-auto">
             Descubre una amplia variedad de actividades para tu bienestar físico y mental
           </p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -283,7 +309,9 @@ const LandingPage = ({
             ].map((cat, i) => (
               <div 
                 key={i}
-                className="relative rounded-2xl overflow-hidden cursor-pointer group"
+                ref={observe}
+                className={`animate-on-scroll relative rounded-2xl overflow-hidden cursor-pointer group`}
+                style={{ transitionDelay: `${i * 0.05}s` }}
                 onClick={onBrowse}
               >
                 <div className="aspect-square">
@@ -303,11 +331,11 @@ const LandingPage = ({
         </div>
       </section>
 
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-gray-50 overflow-hidden">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Cómo funciona FastPass Col</h2>
+          <h2 ref={observe} className="animate-fade-up text-3xl font-bold text-center mb-12">Cómo funciona NextBooking Col</h2>
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-1 text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <CreditCard className="w-10 h-10 text-blue-600" />
               </div>
@@ -316,7 +344,7 @@ const LandingPage = ({
                 Pagas una suscripción mensual y recibes créditos que canjeas por clases o servicios. El costo en créditos varía según la popularidad del lugar y la hora.
               </p>
             </div>
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-2 text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <MapPin className="w-10 h-10 text-blue-600" />
               </div>
@@ -325,7 +353,7 @@ const LandingPage = ({
                 Accedes a una red de gimnasios, estudios boutique, spas y salones. No estás atado a un solo lugar.
               </p>
             </div>
-            <div className="text-center">
+            <div ref={observe} className="animate-on-scroll stagger-3 text-center">
               <div className="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
                 <Calendar className="w-10 h-10 text-blue-600" />
               </div>
@@ -338,7 +366,24 @@ const LandingPage = ({
         </div>
       </section>
 
-      <footer className="bg-gray-900 text-white py-12">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 py-2 z-40 marquee-container">
+        <div className="animate-marquee inline-block">
+          <span className="text-gray-900 font-semibold text-sm tracking-widest px-8">
+            EL BIENESTAR ES UNA TENDENCIA
+          </span>
+          <span className="text-gray-900 font-semibold text-sm tracking-widest px-8">
+            EL BIENESTAR ES UNA TENDENCIA
+          </span>
+          <span className="text-gray-900 font-semibold text-sm tracking-widest px-8">
+            EL BIENESTAR ES UNA TENDENCIA
+          </span>
+          <span className="text-gray-900 font-semibold text-sm tracking-widest px-8">
+            EL BIENESTAR ES UNA TENDENCIA
+          </span>
+        </div>
+      </div>
+
+      <footer className="bg-gray-900 text-white py-12 pb-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
@@ -348,7 +393,7 @@ const LandingPage = ({
                   <div className="h-1/4 bg-blue-600"></div>
                   <div className="h-1/4 bg-red-600"></div>
                 </div>
-                <span className="text-lg font-bold">FastPass Col</span>
+                <span className="text-lg font-bold">NextBooking Col</span>
               </div>
               <p className="text-gray-400 text-sm">
                 La plataforma líder de bienestar y fitness en Colombia.
@@ -378,7 +423,7 @@ const LandingPage = ({
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            © 2024 FastPass Col. Todos los derechos reservados.
+            © 2024 NextBooking Col. Todos los derechos reservados.
           </div>
         </div>
       </footer>
@@ -456,8 +501,8 @@ const AuthModal = ({
           </DialogTitle>
           <DialogDescription className="text-center">
             {tab === 'login' 
-              ? 'Ingresa a tu cuenta de FastPass Col' 
-              : 'Únete a FastPass Col y obtén 20 créditos gratis'}
+              ? 'Ingresa a tu cuenta de NextBooking Col' 
+              : 'Únete a NextBooking Col y obtén 20 créditos gratis'}
           </DialogDescription>
         </DialogHeader>
 
@@ -1275,8 +1320,56 @@ const ProfilePage = ({
   );
 };
 
+const CitySelector = ({ onSelectCity }: { onSelectCity: (city: string) => void }) => {
+  const cities = [
+    { name: "Duitama", image: "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?w=800" },
+    { name: "Tunja", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800" },
+    { name: "Sogamoso", image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center justify-center p-4">
+      <div className="text-center mb-12">
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg flex flex-col">
+            <div className="h-1/2 bg-yellow-400"></div>
+            <div className="h-1/4 bg-blue-600"></div>
+            <div className="h-1/4 bg-red-600"></div>
+          </div>
+        </div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">NextBooking Col</h1>
+        <p className="text-xl text-gray-600">Selecciona tu ciudad</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full">
+        {cities.map((city) => (
+          <button
+            key={city.name}
+            onClick={() => onSelectCity(city.name)}
+            className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          >
+            <div className="aspect-video">
+              <img 
+                src={city.image} 
+                alt={city.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-6">
+              <h3 className="text-2xl font-bold text-white">{city.name}</h3>
+              <p className="text-white/80 text-sm mt-1">Boyacá, Colombia</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 function App() {
-  const [page, setPage] = useState<'landing' | 'search' | 'business' | 'profile'>('landing');
+  const [page, setPage] = useState<'city' | 'landing' | 'search' | 'business' | 'profile'>('city');
+  const [, setSelectedCity] = useState<string | null>(null);
   const [user, setUser] = useState<UserType | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -1284,8 +1377,13 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
+    const savedCity = localStorage.getItem('selectedCity');
     if (token) {
       fetchUser(token);
+    }
+    if (savedCity) {
+      setSelectedCity(savedCity);
+      setPage('landing');
     }
   }, []);
 
@@ -1339,6 +1437,12 @@ function App() {
     }
   };
 
+  const handleSelectCity = (city: string) => {
+    setSelectedCity(city);
+    localStorage.setItem('selectedCity', city);
+    setPage('landing');
+  };
+
   return (
     <>
       <Toaster position="top-center" />
@@ -1349,6 +1453,10 @@ function App() {
         onSuccess={handleAuthSuccess}
         initialTab={authModalTab}
       />
+
+      {page === 'city' && (
+        <CitySelector onSelectCity={handleSelectCity} />
+      )}
 
       {page === 'landing' && (
         <LandingPage
